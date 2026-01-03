@@ -7,8 +7,8 @@ MY_BRANCH="dev"
 # 原作者的分支 (通常是 main 或 master)
 TARGET_BRANCH="dev"
 # 默认的上游仓库地址
-DEFAULT_UPSTREAM_URL="git@github.com:shipanyai/shipany-template-two.git"
-HTTPS_UPSTREAM_URL="https://github.com/shipanyai/shipany-template-two.git"
+DEFAULT_UPSTREAM_URL="git@github.com:jqlts1/my-shipany-project-2.git"
+HTTPS_UPSTREAM_URL="https://github.com/jqlts1/my-shipany-project-2.git"
 
 echo "========================================"
 echo "🛠️  正在检查仓库环境..."
@@ -50,14 +50,22 @@ fi
 
 # --- 3. 确保 Origin 存在 (Github) ---
 
-# [新增] 检查 Origin 是否错误地指向了官方模板（这会导致无权限推送）
+# [Modified] Detect if this is a fresh clone from the template
+# If the current origin matches the default upstream, we treat it as a "template clone"
+# and rename origin -> upstream, so that a NEW origin can be created.
 ORIGIN_URL=$(git remote get-url origin 2>/dev/null)
 
-# 更加宽松的检查：只要 URL 里包含 shipanyai/shipany-template-two 就认为是错的
-if [[ "$ORIGIN_URL" == *"shipanyai/shipany-template-two"* ]]; then
-    echo "⚠️  检测到 origin 指向了官方只读模板 ($ORIGIN_URL)。"
-    echo "🔧 正在移除错误的 remote origin..."
-    git remote remove origin
+if [ "$ORIGIN_URL" == "$DEFAULT_UPSTREAM_URL" ] || [ "$ORIGIN_URL" == "$HTTPS_UPSTREAM_URL" ] || [[ "$ORIGIN_URL" == *"shipanyai/shipany-template-two"* ]]; then
+    echo "⚠️  检测到 origin 指向了模板地址 ($ORIGIN_URL)。"
+    echo "� 正在将其重命名为 'upstream'，以便你可以创建自己的仓库..."
+    
+    # If upstream already exists (e.g. from previous run), remove it first to avoid collision
+    if git remote | grep -q "upstream"; then
+        git remote remove upstream
+    fi
+    
+    git remote rename origin upstream
+    echo "✅ 已将原 origin 重命名为 upstream。"
 fi
 
 if ! git remote | grep -q "origin"; then
